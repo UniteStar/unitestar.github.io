@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Latih Minda! Premium</title>
+    <style>
+        /* === CSS STYLING === */
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --background-color: #f5f7fa;
+            --card-color: #ffffff;
+            --text-color: #2c3e50;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .game-container {
+            background: var(--card-color);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .score-board {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            background: #edf2f7;
+            padding: 10px 20px;
+            border-radius: 8px;
+        }
+
+        .question-box {
+            margin-bottom: 30px;
+        }
+
+        .instruction {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .game-image {
+            max-width: 200px;
+            height: auto;
+            border-radius: 10px;
+            margin: 15px 0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .options-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .btn-opt {
+            background: #fff;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .btn-opt:hover {
+            border-color: var(--primary-color);
+            background: #f0f7ff;
+            transform: translateY(-2px);
+        }
+
+        .btn-opt.correct {
+            background-color: var(--secondary-color) !important;
+            border-color: var(--secondary-color) !important;
+            color: white;
+        }
+
+        .btn-opt.wrong {
+            background-color: var(--danger-color) !important;
+            border-color: var(--danger-color) !important;
+            color: white;
+        }
+
+        .btn-action {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: background 0.2s;
+            box-shadow: 0 4px 6px rgba(74, 144, 226, 0.3);
+        }
+
+        .btn-action:hover {
+            background: #357abd;
+        }
+
+        .btn-action:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #result-screen {
+            padding: 20px 0;
+        }
+
+        #result-screen h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: var(--secondary-color);
+        }
+
+        #final-score {
+            font-size: 1.5rem;
+            margin-bottom: 25px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <div id="game-screen">
+            <header>
+                <h1>Latih Minda! <span style="color: #f1c40f;">Premium</span></h1>
+                <div class="score-board">
+                    <div id="progress">Soalan: 1/2</div>
+                    <div id="score">Markah: 0</div>
+                </div>
+            </header>
+
+            <main>
+                <div class="question-box">
+                    <p class="instruction" id="question-text">Apakah nama objek/haiwan ini?</p>
+                    <button id="btn-sound" class="btn-action" style="margin-bottom: 15px; background: #9b59b6; box-shadow: 0 4px 6px rgba(155, 89, 182, 0.3);">
+                        🔊 Dengar Bunyi
+                    </button>
+                </div>
+
+                <div class="options-container" id="options-bin">
+                    </div>
+
+                <button id="btn-next" class="btn-action" disabled>Seterusnya</button>
+            </main>
+        </div>
+
+        <div id="result-screen" class="hidden">
+            <h2>Tahniah! Permainan Tamat</h2>
+            <p id="final-score">Anda mendapat 0 daripada 2 markah.</p>
+            <button id="btn-restart" class="btn-action">Main Semula</button>
+        </div>
+    </div>
+
+    <audio id="audio-player"></audio>
+    <audio id="audio-correct" src="assets/correct.wav"></audio>
+
+    <script>
+        /* === JAVASCRIPT LOGIC === */
+
+        // Data Soalan (Disesuaikan dengan aset audio yang anda sediakan)
+        const quizData = [
+            {
+                question: "Bunyi apakah ini?",
+                audio: "assets/apple.mp3", // Sila gantikan/pastikan audio sepadan dengan jawapan
+                options: ["Epal", "Betik", "Pisang", "Cren"],
+                correct: 0
+            },
+            {
+                question: "Bunyi haiwan apakah ini?",
+                audio: "assets/cow.mp3",
+                options: ["Kambing", "Kucing", "Lembu", "Ayam"],
+                correct: 2
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let answered = false;
+
+        // Pautan Elemen DOM
+        const gameScreen = document.getElementById('game-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const questionText = document.getElementById('question-text');
+        const optionsBin = document.getElementById('options-bin');
+        const btnSound = document.getElementById('btn-sound');
+        const btnNext = document.getElementById('btn-next');
+        const btnRestart = document.getElementById('btn-restart');
+        const progressText = document.getElementById('progress');
+        const scoreText = document.getElementById('score');
+        const audioPlayer = document.getElementById('audio-player');
+        const audioCorrect = document.getElementById('audio-correct');
+
+        // Fungsi Memulakan Kuiz
+        function startQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            answered = false;
+            gameScreen.classList.remove('hidden');
+            resultScreen.classList.add('hidden');
+            updateScoreBoard();
+            loadQuestion();
+        }
+
+        // Fungsi Memaparkan Soalan
+        function loadQuestion() {
+            answered = false;
+            btnNext.disabled = true;
+            optionsBin.innerHTML = '';
+            
+            const currentQuestion = quizData[currentQuestionIndex];
+            questionText.innerText = currentQuestion.question;
+            
+            // Set audio soalan
+            audioPlayer.src = currentQuestion.audio;
+            
+            // Jana butang pilihan jawapan
+            currentQuestion.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.innerText = option;
+                button.classList.add('btn-opt');
+                button.addEventListener('click', () => selectAnswer(index, button));
+                optionsBin.appendChild(button);
+            });
+
+            updateScoreBoard();
+            // Mainkan bunyi soalan secara automatik (pilihan)
+            playQuestionSound();
+        }
+
+        // Fungsi Main Audio Soalan
+        function playQuestionSound() {
+            audioPlayer.currentTime = 0;
+            audioPlayer.play().catch(e => console.log("Interaksi diperlukan sebelum audio boleh dimainkan secara automatik."));
+        }
+
+        // Fungsi Memilih Jawapan
+        function selectAnswer(selectedIndex, selectedButton) {
+            if (answered) return; // Sekat jika sudah jawab
+            
+            answered = true;
+            const currentQuestion = quizData[currentQuestionIndex];
+            const allButtons = optionsBin.querySelectorAll('.btn-opt');
+
+            if (selectedIndex === currentQuestion.correct) {
+                // Jawapan Betul
+                selectedButton.classList.add('correct');
+                score++;
+                audioCorrect.currentTime = 0;
+                audioCorrect.play();
+            } else {
+                // Jawapan Salah
+                selectedButton.classList.add('wrong');
+                // Tunjukkan jawapan yang betul
+                allButtons[currentQuestion.correct].classList.add('correct');
+            }
+
+            updateScoreBoard();
+            btnNext.disabled = false;
+        }
+
+        // Fungsi Kemas Kini Papan Markah
+        function updateScoreBoard() {
+            progressText.innerText = `Soalan: ${currentQuestionIndex + 1}/${quizData.length}`;
+            scoreText.innerText = `Markah: ${score}`;
+        }
+
+        // Fungsi Tamat Kuiz / Papar Keputusan
+        function showResult() {
+            gameScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+            document.getElementById('final-score').innerText = `Anda mendapat ${score} daripada ${quizData.length} markah.`;
+        }
+
+        // Event Listeners
+        btnSound.addEventListener('click', playQuestionSound);
+
+        btnNext.addEventListener('click', () => {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizData.length) {
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        });
+
+        btnRestart.addEventListener('click', startQuiz);
+
+        // Jalankan kuiz sebaik sahaja fail dibuka
+        window.onload = startQuiz;
+    </script>
+</body>
+</html>
